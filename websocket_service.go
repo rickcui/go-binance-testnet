@@ -8,13 +8,26 @@ import (
 )
 
 var (
-	baseURL         = "wss://stream.binance.com:9443/ws"
-	baseFutureURL   = "wss://fstream.binance.com/ws"
+	//现货地址
+	baseURL = "wss://stream.binance.com:9443/ws"
+
+	//现货restapi testnet地址
+	//baseURL = "https://testnet.binancefuture.com"
+
+	//期货实盘地址
+	baseFutureURL = "wss://fstream.binance.com/ws"
+
+	//期货Testnet地址
+	//baseFutureURL = "wss://stream.binancefuture.com/ws"
+
 	combinedBaseURL = "wss://stream.binance.com:9443/stream?streams="
+	//combinedBaseURL = "wss://stream.binancefuture.com/stream?streams="
+
 	// WebsocketTimeout is an interval for sending ping/pong messages if WebsocketKeepalive is enabled
 	WebsocketTimeout = time.Second * 60
+
 	// WebsocketKeepalive enables sending ping/pong messages to check the connection stability
-	WebsocketKeepalive = false
+	WebsocketKeepalive = true
 )
 
 // WsPartialDepthEvent define websocket partial depth book event
@@ -30,7 +43,8 @@ type WsPartialDepthHandler func(event *WsPartialDepthEvent)
 
 // WsPartialDepthServe serve websocket partial depth handler with a symbol
 func WsPartialDepthServe(symbol string, levels string, handler WsPartialDepthHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
-	endpoint := fmt.Sprintf("%s/%s@depth%s", baseURL, strings.ToLower(symbol), levels)
+	//endpoint := fmt.Sprintf("%s/%s@depth%s", baseURL, strings.ToLower(symbol), levels)
+	endpoint := fmt.Sprintf("%s/%s@depth%s", baseFutureURL, strings.ToLower(symbol), levels)
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
 		j, err := newJSON(message)
@@ -113,7 +127,8 @@ type WsDepthHandler func(event *WsDepthEvent)
 
 // WsDepthServe serve websocket depth handler with a symbol
 func WsDepthServe(symbol string, handler WsDepthHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
-	endpoint := fmt.Sprintf("%s/%s@depth", baseURL, strings.ToLower(symbol))
+	//endpoint := fmt.Sprintf("%s/%s@depth", baseURL, strings.ToLower(symbol))
+	endpoint := fmt.Sprintf("%s/%s@depth", baseFutureURL, strings.ToLower(symbol))
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
 		j, err := newJSON(message)
@@ -166,7 +181,8 @@ type WsKlineHandler func(event *WsKlineEvent)
 
 // WsKlineServe serve websocket kline handler with a symbol and interval like 15m, 30s
 func WsKlineServe(symbol string, interval string, handler WsKlineHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
-	endpoint := fmt.Sprintf("%s/%s@kline_%s", baseURL, strings.ToLower(symbol), interval)
+	//endpoint := fmt.Sprintf("%s/%s@kline_%s", baseURL, strings.ToLower(symbol), interval)
+	endpoint := fmt.Sprintf("%s/%s@kline_%s", baseFutureURL, strings.ToLower(symbol), interval)
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
 		event := new(WsKlineEvent)
@@ -213,7 +229,9 @@ type WsAggTradeHandler func(event *WsAggTradeEvent)
 
 // WsAggTradeServe serve websocket aggregate handler with a symbol
 func WsAggTradeServe(symbol string, handler WsAggTradeHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
-	endpoint := fmt.Sprintf("%s/%s@aggTrade", baseURL, strings.ToLower(symbol))
+	//endpoint := fmt.Sprintf("%s/%s@aggTrade", baseURL, strings.ToLower(symbol))
+	//改成Testnet的地址
+	endpoint := fmt.Sprintf("%s/%s@aggTrade", baseFutureURL, strings.ToLower(symbol))
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
 		event := new(WsAggTradeEvent)
@@ -242,12 +260,51 @@ type WsAggTradeEvent struct {
 	Placeholder           bool   `json:"M"` // add this field to avoid case insensitive unmarshaling
 }
 
+//WsMarkPriceHandler websocket mark price event
+type WsMarkPriceHandler func(event *WsMarkPriceEvent)
+
+// WsMarkPriceServe serve websocket mark price handler with a symbol
+func WsMarkPriceServe(symbol string, handler WsMarkPriceHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
+
+	//endpoint := fmt.Sprintf("%s/%s@markPrice", baseURL, strings.ToLower(symbol))
+
+	//实盘需要改成1s的更新频率
+	endpoint := fmt.Sprintf("%s/%s@markPrice@1s", baseFutureURL, strings.ToLower(symbol))
+
+	//改成Testnet的地址
+	//endpoint := fmt.Sprintf("%s/%s@markPrice", baseFutureURL, strings.ToLower(symbol))
+
+	cfg := newWsConfig(endpoint)
+	wsHandler := func(message []byte) {
+		event := new(WsMarkPriceEvent)
+		err := json.Unmarshal(message, event)
+		if err != nil {
+			errHandler(err)
+			return
+		}
+		handler(event)
+	}
+	return wsServe(cfg, wsHandler, errHandler)
+}
+
+// WsMarkPriceEvent define websocket mark price event
+type WsMarkPriceEvent struct {
+	Event           string `json:"e"`
+	Time            int64  `json:"E"`
+	Symbol          string `json:"s"`
+	MarkPrice       string `json:"p"`
+	FundingRate     string `json:"r"`
+	NextFundingTime int64  `json:"T"`
+	Placeholder     bool   `json:"M"` // add this field to avoid case insensitive unmarshaling
+}
+
 // WsTradeHandler handle websocket trade event
 type WsTradeHandler func(event *WsTradeEvent)
 
 // WsTradeServe serve websocket handler with a symbol
 func WsTradeServe(symbol string, handler WsTradeHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
-	endpoint := fmt.Sprintf("%s/%s@trade", baseURL, strings.ToLower(symbol))
+	//endpoint := fmt.Sprintf("%s/%s@trade", baseURL, strings.ToLower(symbol))
+	endpoint := fmt.Sprintf("%s/%s@trade", baseFutureURL, strings.ToLower(symbol))
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
 		event := new(WsTradeEvent)
@@ -278,7 +335,8 @@ type WsTradeEvent struct {
 
 // WsUserDataServe serve user data handler with listen key
 func WsUserDataServe(listenKey string, handler WsHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
-	endpoint := fmt.Sprintf("%s/%s", baseURL, listenKey)
+	//endpoint := fmt.Sprintf("%s/%s", baseURL, listenKey)
+	endpoint := fmt.Sprintf("%s/%s", baseFutureURL, listenKey)
 	cfg := newWsConfig(endpoint)
 	return wsServe(cfg, handler, errHandler)
 }
@@ -298,7 +356,8 @@ type WsMarketStatHandler func(event *WsMarketStatEvent)
 
 // WsMarketStatServe serve websocket that push 24hr statistics for single market every second
 func WsMarketStatServe(symbol string, handler WsMarketStatHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
-	endpoint := fmt.Sprintf("%s/%s@ticker", baseURL, strings.ToLower(symbol))
+	//endpoint := fmt.Sprintf("%s/%s@ticker", baseURL, strings.ToLower(symbol))
+	endpoint := fmt.Sprintf("%s/%s@ticker", baseFutureURL, strings.ToLower(symbol))
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
 		var event WsMarketStatEvent
@@ -317,7 +376,8 @@ type WsAllMarketsStatHandler func(event WsAllMarketsStatEvent)
 
 // WsAllMarketsStatServe serve websocket that push 24hr statistics for all market every second
 func WsAllMarketsStatServe(handler WsAllMarketsStatHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
-	endpoint := fmt.Sprintf("%s/!ticker@arr", baseURL)
+	//endpoint := fmt.Sprintf("%s/!ticker@arr", baseURL)
+	endpoint := fmt.Sprintf("%s/!ticker@arr", baseFutureURL)
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
 		var event WsAllMarketsStatEvent
@@ -366,7 +426,8 @@ type WsAllMiniMarketsStatServeHandler func(event WsAllMiniMarketsStatEvent)
 
 // WsAllMiniMarketsStatServe serve websocket that push mini version of 24hr statistics for all market every second
 func WsAllMiniMarketsStatServe(handler WsAllMiniMarketsStatServeHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
-	endpoint := fmt.Sprintf("%s/!miniTicker@arr", baseURL)
+	//endpoint := fmt.Sprintf("%s/!miniTicker@arr", baseURL)
+	endpoint := fmt.Sprintf("%s/!miniTicker@arr", baseFutureURL)
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {
 		var event WsAllMiniMarketsStatEvent
