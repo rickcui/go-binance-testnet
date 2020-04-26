@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/bitly/go-simplejson"
-	"github.com/rickcui/go-binance-real/common"
+	"github.com/rickcui/go-binance-testnet/common"
 )
 
 // SideType define side type of order
@@ -135,9 +135,11 @@ func newJSON(data []byte) (j *simplejson.Json, err error) {
 // Services will be created by the form client.NewXXXService().
 func NewClient(apiKey, secretKey string) *Client {
 	return &Client{
-		APIKey:     apiKey,
-		SecretKey:  secretKey,
-		BaseURL:    "https://fapi.binance.com",
+		APIKey:    apiKey,
+		SecretKey: secretKey,
+		//BaseURL:    "https://fapi.binance.com",
+		//Testnet的地址：
+		BaseURL:    "https://testnet.binancefuture.com",
 		UserAgent:  "Binance/golang",
 		HTTPClient: http.DefaultClient,
 		Logger:     log.New(os.Stderr, "Binance-golang ", log.LstdFlags),
