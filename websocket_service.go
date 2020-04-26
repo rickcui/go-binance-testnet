@@ -9,19 +9,19 @@ import (
 
 var (
 	//现货地址
-	baseURL = "wss://stream.binance.com:9443/ws"
+	//baseURL = "wss://stream.binance.com:9443/ws"
 
 	//现货restapi testnet地址
-	//baseURL = "https://testnet.binancefuture.com"
+	baseURL = "https://testnet.binancefuture.com"
 
 	//期货实盘地址
-	baseFutureURL = "wss://fstream.binance.com/ws"
+	//baseFutureURL = "wss://fstream.binance.com/ws"
 
 	//期货Testnet地址
-	//baseFutureURL = "wss://stream.binancefuture.com/ws"
+	baseFutureURL = "wss://stream.binancefuture.com/ws"
 
-	combinedBaseURL = "wss://stream.binance.com:9443/stream?streams="
-	//combinedBaseURL = "wss://stream.binancefuture.com/stream?streams="
+	//combinedBaseURL = "wss://stream.binance.com:9443/stream?streams="
+	combinedBaseURL = "wss://stream.binancefuture.com/stream?streams="
 
 	// WebsocketTimeout is an interval for sending ping/pong messages if WebsocketKeepalive is enabled
 	WebsocketTimeout = time.Second * 60
@@ -269,10 +269,10 @@ func WsMarkPriceServe(symbol string, handler WsMarkPriceHandler, errHandler ErrH
 	//endpoint := fmt.Sprintf("%s/%s@markPrice", baseURL, strings.ToLower(symbol))
 
 	//实盘需要改成1s的更新频率
-	endpoint := fmt.Sprintf("%s/%s@markPrice@1s", baseFutureURL, strings.ToLower(symbol))
+	//endpoint := fmt.Sprintf("%s/%s@markPrice@1s", baseFutureURL, strings.ToLower(symbol))
 
 	//改成Testnet的地址
-	//endpoint := fmt.Sprintf("%s/%s@markPrice", baseFutureURL, strings.ToLower(symbol))
+	endpoint := fmt.Sprintf("%s/%s@markPrice", baseFutureURL, strings.ToLower(symbol))
 
 	cfg := newWsConfig(endpoint)
 	wsHandler := func(message []byte) {

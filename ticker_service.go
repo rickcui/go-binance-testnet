@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/rickcui/go-binance-real/common"
+	"github.com/rickcui/go-binance-testnet/common"
 )
 
 // ListBookTickersService list best price/qty on the order book for a symbol or symbols
