@@ -260,6 +260,39 @@ type WsAggTradeEvent struct {
 	Placeholder           bool   `json:"M"` // add this field to avoid case insensitive unmarshaling
 }
 
+// WsSymbolBookTickerHandler handle websocket symbol book ticker trade event
+type WsSymbolBookTickerHandler func(event *WsSymbolBookTickerEvent)
+
+// WsSymbolBookTickerServe serve websocket book ticker handler with a symbol
+func WsSymbolBookTickerServe(symbol string, handler WsSymbolBookTickerHandler, errHandler ErrHandler) (doneC, stopC chan struct{}, err error) {
+	//endpoint := fmt.Sprintf("%s/%s@bookTicker", baseURL, strings.ToLower(symbol))
+	//改成Testnet的地址
+	endpoint := fmt.Sprintf("%s/%s@bookTicker", baseFutureURL, strings.ToLower(symbol))
+	cfg := newWsConfig(endpoint)
+	wsHandler := func(message []byte) {
+		event := new(WsSymbolBookTickerEvent)
+		err := json.Unmarshal(message, event)
+		if err != nil {
+			errHandler(err)
+			return
+		}
+		handler(event)
+	}
+	return wsServe(cfg, wsHandler, errHandler)
+}
+
+// WsSymbolBookTickerEvent define websocket symbol book ticker trade event
+type WsSymbolBookTickerEvent struct {
+	UpdateID        int64  `json:"u"`
+	Symbol          string `json:"s"`
+	BestBidPrice    string `json:"b"`
+	BestBidQuantity string `json:"B"`
+	BestAskPrice    string `json:"a"`
+	BestAskQuantity string `json:"A"`
+	MatchTime       int64  `json:"T"`
+	UpdateTime      int64  `json:"E"`
+}
+
 //WsMarkPriceHandler websocket mark price event
 type WsMarkPriceHandler func(event *WsMarkPriceEvent)
 
